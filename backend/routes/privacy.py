@@ -20,5 +20,3 @@ def get_privacy_settings(current_user: Users = Depends(get_current_user),
         )
         
     return PrivacySettingsUpdate.model_validate(settings) # convert ORM object to Pydantic schema 
-    
-    

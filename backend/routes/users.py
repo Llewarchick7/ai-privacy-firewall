@@ -24,6 +24,19 @@ router = APIRouter()
 # Register new User
 @router.post("/register")
 def register(user: UserRegister, db: Session = Depends(get_db)):
+    """
+    Register a new user.
+
+    Args:
+        user (UserRegister): _description_
+        db (Session, optional): _description_. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException: If the email is already registered.
+
+    Returns:
+        dict: A message indicating successful registration and the user's name.
+    """
     # Check if user already exists
     existing_user = db.query(Users).filter(Users.email == user.email).first()
     if existing_user:
@@ -49,6 +62,19 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Login a user.
+
+    Args:
+        form_data (OAuth2PasswordRequestForm, optional): The login form data. Defaults to Depends().
+        db (Session, optional): The database session. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException: If the credentials are invalid.
+
+    Returns:
+        Token: An access token for the authenticated user.
+    """
     user = db.query(Users).filter(Users.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
@@ -65,13 +91,36 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
         
         
 @router.post("/profile")
-def get_profile(current_user: Users = Depends(get_current_user)):
+def get_profile_info(current_user: Users = Depends(get_current_user)):
+    """
+    Get the profile information of the current user.
+
+    Args:
+        current_user (Users, optional): The current user. Defaults to Depends(get_current_user).
+
+    Returns:
+        dict: The profile information of the user.
+    """
     return {"name": current_user.name, "email": current_user.email, "role": current_user.role}
 
 
-@router.post("/profile")
-def update_profile(profile_update: UserProfile, current_user: Users = Depends(get_current_user), 
-                   db: Session = Depends(get_db)):
+@router.put("/profile")
+def update_profile_info(profile_update: UserProfile, current_user: Users = Depends(get_current_user),
+                        db: Session = Depends(get_db)):
+    """
+    Update the profile information of the current user.
+
+    Args:
+        profile_update (UserProfile): The updated profile information.
+        current_user (Users, optional): The current user. Defaults to Depends(get_current_user).
+        db (Session, optional): The database session. Defaults to Depends(get_db).
+    
+    Raises:
+        HTTPException: If the email is already in use.
+        
+    Returns:
+        dict: A message indicating successful profile update.
+    """
     if profile_update.name:
         current_user.name = profile_update.name
     
