@@ -21,7 +21,10 @@ class Users(Base):
     twofa_secret = Column(String, nullable=True)
     
     # one-to-one relationship -> returns the corresponding privacy_settings data for a given "user"(variable in PrivacySettings database)
-    privacy_settings = relationship("PrivacySettings", back_populates="user") 
+    privacy_settings = relationship("PrivacySettings", back_populates="user")
+    
+    # one-to-many relationship -> user can have multiple devices
+    devices = relationship("Device", back_populates="user") 
     
     
     

@@ -1,0 +1,20 @@
+{
+    "device_id": "device_example_001",
+    "name": "Home Network Firewall",
+    "api_url": "http://your-backend-server.com:8000/api",
+    "api_token": "your_device_api_token_here",
+    "location": "Home Office",
+    "monitor_interface": "eth0",
+    "dns_port": 53,
+    "log_level": "INFO",
+    "heartbeat_interval": 300,
+    "cache_size": 10000,
+    "local_blocklists": [
+        "/etc/dns-firewall/blocklists/malware.txt",
+        "/etc/dns-firewall/blocklists/phishing.txt"
+    ],
+    "backup_dns_servers": [
+        "8.8.8.8",
+        "1.1.1.1"
+    ]
+}

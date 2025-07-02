@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Privacy Firewall Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #48cae4 0%, #023047 100%);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.4em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .device-list {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            transition: background 0.3s ease;
+        }
+
+        .device-item:hover {
+            background: #f8f9fa;
+        }
+
+        .device-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .device-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .status-inactive {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .alerts-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            background: #f8f9fa;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .alert-critical {
+            border-left-color: #e74c3c;
+        }
+
+        .alert-high {
+            border-left-color: #f39c12;
+        }
+
+        .alert-medium {
+            border-left-color: #f1c40f;
+        }
+
+        .alert-time {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-left: auto;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🛡️ AI Privacy Firewall</h1>
+            <p class="subtitle">Real-time DNS threat monitoring and protection</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card success">
+                <div class="stat-value" id="totalQueries">0</div>
+                <div class="stat-label">Total DNS Queries</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-value" id="blockedQueries">0</div>
+                <div class="stat-label">Blocked Threats</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value" id="activeDevices">0</div>
+                <div class="stat-label">Active Devices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="threatScore">0%</div>
+                <div class="stat-label">Protection Rate</div>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 class="chart-title">Threat Detection Timeline</h3>
+                <canvas id="threatChart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title">Top Blocked Domains</h3>
+                <canvas id="domainsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="device-list">
+            <h3 class="chart-title">Connected Devices</h3>
+            <div id="devicesList"></div>
+        </div>
+
+        <div class="alerts-section">
+            <h3 class="chart-title">Recent Security Alerts</h3>
+            <div id="alertsList"></div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="refreshData()">🔄 Refresh</button>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000/api';
+        let authToken = localStorage.getItem('authToken');
+
+        // Chart instances
+        let threatChart, domainsChart;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadDashboardData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadDashboardData, 30000);
+        });
+
+        function initCharts() {
+            // Threat Detection Timeline Chart
+            const threatCtx = document.getElementById('threatChart').getContext('2d');
+            threatChart = new Chart(threatCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Threats Detected',
+                        data: [],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Top Blocked Domains Chart
+            const domainsCtx = document.getElementById('domainsChart').getContext('2d');
+            domainsChart = new Chart(domainsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Load network analytics
+                const analytics = await fetchWithAuth('/dns/analytics/network');
+                updateStats(analytics);
+
+                // Load threat summary
+                const threats = await fetchWithAuth('/dns/threats/summary');
+                updateThreatChart(threats);
+
+                // Load devices
+                const devices = await fetchWithAuth('/dns/devices');
+                updateDevicesList(devices);
+
+                // Load recent threats for alerts
+                const recentThreats = await fetchWithAuth('/dns/threats?limit=5');
+                updateAlerts(recentThreats);
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showError('Failed to load dashboard data');
+            }
+        }
+
+        function updateStats(analytics) {
+            document.getElementById('totalQueries').textContent = 
+                analytics.total_queries_24h.toLocaleString();
+            document.getElementById('blockedQueries').textContent = 
+                analytics.blocked_queries_24h.toLocaleString();
+            document.getElementById('activeDevices').textContent = 
+                analytics.active_devices;
+            
+            const protectionRate = analytics.total_queries_24h > 0 
+                ? (analytics.blocked_queries_24h / analytics.total_queries_24h * 100).toFixed(1)
+                : 0;
+            document.getElementById('threatScore').textContent = protectionRate + '%';
+
+            // Update domains chart
+            const domains = analytics.top_blocked_domains || [];
+            domainsChart.data.labels = domains.map(d => d.domain);
+            domainsChart.data.datasets[0].data = domains.map(d => d.count);
+            domainsChart.update();
+        }
+
+        function updateThreatChart(threats) {
+            // Generate sample timeline data (in real implementation, this would come from API)
+            const now = new Date();
+            const labels = [];
+            const data = [];
+            
+            for (let i = 23; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 3600000);
+                labels.push(time.getHours() + ':00');
+                data.push(Math.floor(Math.random() * threats.total_threats / 24));
+            }
+
+            threatChart.data.labels = labels;
+            threatChart.data.datasets[0].data = data;
+            threatChart.update();
+        }
+
+        function updateDevicesList(devices) {
+            const container = document.getElementById('devicesList');
+            container.innerHTML = '';
+
+            devices.forEach(device => {
+                const deviceItem = document.createElement('div');
+                deviceItem.className = 'device-item';
+                
+                const isActive = device.is_active && 
+                    new Date() - new Date(device.last_seen) < 3600000; // 1 hour
+
+                deviceItem.innerHTML = `
+                    <div>
+                        <div class="device-name">${device.name}</div>
+                        <div style="color: #7f8c8d; font-size: 0.9em;">${device.ip_address}</div>
+                    </div>
+                    <div class="device-status ${isActive ? 'status-active' : 'status-inactive'}">
+                        ${isActive ? 'Active' : 'Inactive'}
+                    </div>
+                `;
+                
+                container.appendChild(deviceItem);
+            });
+        }
+
+        function updateAlerts(threats) {
+            const container = document.getElementById('alertsList');
+            container.innerHTML = '';
+
+            if (threats.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No recent alerts</p>';
+                return;
+            }
+
+            threats.forEach(threat => {
+                const alertItem = document.createElement('div');
+                alertItem.className = `alert-item alert-${threat.threat_level}`;
+                
+                const time = new Date(threat.timestamp).toLocaleTimeString();
+                
+                alertItem.innerHTML = `
+                    <div>
+                        <strong>${threat.threat_type.replace('_', ' ').toUpperCase()}</strong> detected
+                        <div style="color: #7f8c8d; font-size: 0.9em;">${threat.description || 'No description'}</div>
+                    </div>
+                    <div class="alert-time">${time}</div>
+                `;
+                
+                container.appendChild(alertItem);
+            });
+        }
+
+        async function fetchWithAuth(endpoint) {
+            const response = await fetch(API_BASE + endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            return response.json();
+        }
+
+        function refreshData() {
+            loadDashboardData();
+            showNotification('Dashboard refreshed');
+        }
+
+        function showError(message) {
+            showNotification(message, 'error');
+        }
+
+        function showNotification(message, type = 'info') {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? '#e74c3c' : '#2ecc71'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                z-index: 1000;
+                font-weight: bold;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Mock data for demo (remove in production)
+        if (!authToken) {
+            // For demo purposes, load with mock data
+            setTimeout(() => {
+                const mockAnalytics = {
+                    total_queries_24h: 15420,
+                    blocked_queries_24h: 1205,
+                    active_devices: 3,
+                    top_blocked_domains: [
+                        { domain: 'malware.example.com', count: 45 },
+                        { domain: 'phishing.bad.net', count: 32 },
+                        { domain: 'ads.tracker.org', count: 28 },
+                        { domain: 'suspicious.tk', count: 19 },
+                        { domain: 'botnet.evil.co', count: 15 }
+                    ]
+                };
+
+                const mockDevices = [
+                    { name: 'Home Router', ip_address: '192.168.1.1', is_active: true, last_seen: new Date().toISOString() },
+                    { name: 'Office Firewall', ip_address: '10.0.0.1', is_active: true, last_seen: new Date().toISOString() },
+                    { name: 'Guest Network', ip_address: '192.168.100.1', is_active: false, last_seen: new Date(Date.now() - 7200000).toISOString() }
+                ];
+
+                const mockThreats = [
+                    { threat_type: 'malware', threat_level: 'critical', timestamp: new Date().toISOString(), description: 'Malicious domain blocked' },
+                    { threat_type: 'phishing', threat_level: 'high', timestamp: new Date(Date.now() - 300000).toISOString(), description: 'Phishing attempt detected' },
+                    { threat_type: 'dns_tunneling', threat_level: 'medium', timestamp: new Date(Date.now() - 600000).toISOString(), description: 'Suspicious DNS tunneling pattern' }
+                ];
+
+                updateStats(mockAnalytics);
+                updateThreatChart({ total_threats: 89 });
+                updateDevicesList(mockDevices);
+                updateAlerts(mockThreats);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

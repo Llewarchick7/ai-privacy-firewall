@@ -1,8 +1,7 @@
 """
-Schema definitions for serialization and validation of user-related data.
-
-This file defines the schemas and enums related to user management in the application, 
-using Pydantic for data validation and serialization.
+Schema definitions for serialization and validation of user-related data. This module includes schemas for 
+user registration, login, profile updates, privacy settings, and two-factor authentication. When user changes their information, their data is validated/serialized 
+using Pydantic, ensuring type safety and correctness.
 """
 
 from pydantic import BaseModel, EmailStr
