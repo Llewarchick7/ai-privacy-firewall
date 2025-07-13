@@ -6,12 +6,12 @@ It includes endpoints for registering new users, logging in, and verifying user 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from database import get_db
-from models.users import Users, PrivacySettings
+from backend.database import get_db
+from backend.models.users import Users, PrivacySettings
 from backend.services.auth import hash_password, verify_password, create_access_token
 from backend.schemas.user_schemas import UserRegister, UserProfile, PrivacySettingsUpdate, TwoFASetup, TwoFAVerify
 from backend.schemas.token_schema import Token
-from dependencies import get_current_user
+from backend.dependencies import get_current_user
 import pyotp # 'one time password ' library for two factor authentication 
 
 

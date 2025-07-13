@@ -4,7 +4,7 @@ This module defines the User model for the database, representing users with the
 
 from sqlalchemy import Column, Integer, String, Enum, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from database import Base
+from backend.database import Base
 
 class Users(Base):
     __tablename__ = "users"

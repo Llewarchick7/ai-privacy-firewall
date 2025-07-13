@@ -6,7 +6,7 @@ Handles DNS queries, threat detections, and device management.
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float, Text, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from database import Base
+from backend.database import Base
 import enum
 
 class ThreatLevel(enum.Enum):

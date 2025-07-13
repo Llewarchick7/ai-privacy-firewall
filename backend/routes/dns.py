@@ -9,11 +9,11 @@ from sqlalchemy import desc, func, and_
 from typing import List, Optional
 from datetime import datetime, timedelta
 
-from database import get_db
-from dependencies import get_current_user, require_role
-from models.users import Users
-from models.dns_models import Device, DNSQuery, ThreatDetection, DomainReputation, NetworkSettings
-from schemas.dns_schemas import (
+from backend.database import get_db
+from backend.dependencies import get_current_user, require_role
+from backend.models.users import Users
+from backend.models.dns_models import Device, DNSQuery, ThreatDetection, DomainReputation, NetworkSettings
+from backend.schemas.dns_schemas import (
     DeviceCreate, DeviceResponse, DeviceUpdate,
     DNSQueryCreate, DNSQueryResponse, DNSQueryAnalysis,
     ThreatDetectionCreate, ThreatDetectionResponse, ThreatSummary,

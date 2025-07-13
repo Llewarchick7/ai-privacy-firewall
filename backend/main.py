@@ -4,7 +4,7 @@ Ensures authentication routes are accessible at /api/users.
 """
 
 from fastapi import FastAPI, Depends
-from routes import users, privacy, dns
+from backend.routes import users, privacy, dns
 from backend.database import Base, engine, get_db
 from sqlalchemy.orm import Session
 
