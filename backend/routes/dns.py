@@ -24,7 +24,7 @@ from backend.schemas.dns_schemas import (
 
 router = APIRouter()
 
-# Device Management Endpoints
+# Device Management Endpoints...
 @router.post("/devices", response_model=DeviceResponse)
 def register_device(
     device: DeviceCreate,
@@ -161,6 +161,72 @@ def log_dns_query(
     db.commit()
     
     return dns_query
+
+@router.post("/dns-queries/batch")
+def log_dns_queries_batch(queries: List[dict], db: Session = Depends(get_db)):
+    """
+    Batch endpoint for high-performance DNS query logging from C++ monitor.
+    Accepts raw JSON array of DNS queries for efficient bulk insertion.
+    """
+    try:
+        processed_queries = []
+        device_cache = {}  # Cache devices to avoid repeated DB lookups
+        
+        for query_data in queries:
+            device_string_id = query_data.get("device_id")
+            
+            # Use cached device or lookup/create
+            if device_string_id not in device_cache:
+                device = db.query(Device).filter(Device.device_id == device_string_id).first()
+                if not device:
+                    # Auto-register device if it doesn't exist
+                    device = Device(
+                        device_id=device_string_id,
+                        name=f"Auto-registered {device_string_id}",
+                        ip_address=query_data.get("client_ip", "unknown"),
+                        mac_address=device_string_id,  # Use device_id as MAC for now
+                        location="auto-detected",
+                        user_id=1  # Default to first user for now
+                    )
+                    db.add(device)
+                    db.flush()  # Get device.id for foreign key
+                
+                device_cache[device_string_id] = device
+            else:
+                device = device_cache[device_string_id]
+            
+            # Create DNS query record
+            dns_query = DNSQuery(
+                device_id=device.id,  # Use integer foreign key
+                query_name=query_data.get("query_name"),
+                query_type=query_data.get("query_type"),
+                client_ip=query_data.get("client_ip"),
+                response_code=query_data.get("response_code"),
+                response_ip=query_data.get("response_ip"),
+                timestamp=datetime.fromtimestamp(query_data.get("timestamp", 0)) if query_data.get("timestamp") else datetime.utcnow()
+            )
+            
+            db.add(dns_query)
+            processed_queries.append(dns_query)
+            
+            # Update device last_seen (batch update at end)
+            device.last_seen = datetime.utcnow()
+        
+        # Commit all changes in one transaction for performance
+        db.commit()
+        
+        return {
+            "status": "success", 
+            "processed": len(processed_queries),
+            "message": f"Successfully processed {len(processed_queries)} DNS queries"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process batch DNS queries: {str(e)}"
+        )
 
 @router.get("/dns-queries", response_model=List[DNSQueryResponse])
 def get_dns_queries(

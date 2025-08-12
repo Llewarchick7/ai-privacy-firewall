@@ -47,10 +47,10 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     
     # Create new user
     new_user = Users(
-        name = user.name,
-        email = user.email,
-        password = hashed_password,
-        role = user.role if user.role else "user" # Default to "user"
+        name=user.name,
+        email=user.email,
+        password_hash=hashed_password,
+        role=user.role if getattr(user, "role", None) else "user"  # Default to "user"
     )
     
     db.add(new_user)

@@ -5,6 +5,7 @@ This module defines the User model for the database, representing users with the
 from sqlalchemy import Column, Integer, String, Enum, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from backend.database import Base
+from backend.models.audit_log import AuditLogs  # ensure mapper registration
 
 class Users(Base):
     __tablename__ = "users"
@@ -26,6 +27,9 @@ class Users(Base):
     # one-to-many relationship -> user can have multiple devices
     devices = relationship("Device", back_populates="user") 
     
+    # one-to-many relationship -> user can have multiple audit logs
+    audit_logs = relationship("AuditLogs", back_populates="user")
+    
     
     
 # Represents user-specefic privacy settings
@@ -33,13 +37,12 @@ class PrivacySettings(Base):
     __tablename__ = "privacy_settings"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False) # The ForeignKey directly references the id coulumn in the User database, so we know whose privacy settings we have 
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False) # FK to Users.id
     allow_data_sharing = Column(Boolean, default=False)
     receive_marketing_emails = Column(Boolean, default=False)
     auto_delete_old_data = Column(Boolean, default=False)
     
     # one-to-one relationship -> returns the corresponding user data for given "privacy_settings"(variable in Users databse)
     user = relationship("Users", back_populates="privacy_settings")
-    audit_logs = relationship("AuditLogs", back_populates="user")
     
     

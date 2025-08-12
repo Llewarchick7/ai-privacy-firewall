@@ -14,7 +14,8 @@ from typing import Optional
 load_dotenv()
 
 # Secret key for JWT (stored in .env)
-SECRET_KEY = os.getenv("SECRETKEY", "super_secret_key")
+# Use standard env name SECRET_KEY to match .env
+SECRET_KEY = os.getenv("SECRET_KEY", "super_secret_key")
 ALGORITHM = "HS256"  
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
