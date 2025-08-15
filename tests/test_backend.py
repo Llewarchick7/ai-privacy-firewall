@@ -1,57 +1,40 @@
 #!/usr/bin/env python3
 """
-Test script for the AI Privacy Firewall backend API
+Pytest-friendly smoke tests for the AI Privacy Firewall backend API.
+Skips gracefully if the backend server isn't running locally.
 """
 
 import requests
-import json
-import sys
+import pytest
 
 BASE_URL = "http://localhost:8000"
 
-def test_endpoint(method, endpoint, data=None, expected_status=200):
-    """Test an API endpoint"""
+
+def _call_endpoint(method: str, endpoint: str, data=None):
     url = f"{BASE_URL}{endpoint}"
+    if method.upper() == "GET":
+        return requests.get(url, timeout=3)
+    elif method.upper() == "POST":
+        return requests.post(url, json=data, timeout=3)
+    else:
+        raise ValueError("Unsupported method")
+
+
+def _backend_available() -> bool:
     try:
-        if method.upper() == "GET":
-            response = requests.get(url)
-        elif method.upper() == "POST":
-            response = requests.post(url, json=data)
-        
-        print(f"{'✅' if response.status_code == expected_status else '❌'} {method} {endpoint}")
-        print(f"   Status: {response.status_code}")
-        
-        if response.status_code == 200:
-            try:
-                print(f"   Response: {response.json()}")
-            except:
-                print(f"   Response: {response.text[:100]}...")
-        elif response.status_code == 422:
-            print(f"   Validation Error (Expected): {response.json()}")
-        else:
-            print(f"   Error: {response.text[:100]}...")
-        print()
-        
-    except Exception as e:
-        print(f"❌ {method} {endpoint}")
-        print(f"   Error: {e}")
-        print()
+        resp = requests.get(f"{BASE_URL}/api/health", timeout=2)
+        return resp.status_code == 200
+    except Exception:
+        return False
 
-def main():
-    """Run API tests"""
-    print("🧪 Testing AI Privacy Firewall Backend API")
-    print("=" * 50)
-    
-    # Test basic endpoints
-    test_endpoint("GET", "/")
-    test_endpoint("GET", "/docs")
-    
-    # Test API endpoints (expect validation errors without data)
-    test_endpoint("POST", "/api/users/register", expected_status=422)
-    test_endpoint("GET", "/api/dns/devices")
-    test_endpoint("POST", "/api/dns/devices", expected_status=422)
-    
-    print("🏁 Backend API testing complete!")
 
-if __name__ == "__main__":
-    main()
+@pytest.mark.smoke
+def test_health_and_root_endpoints():
+    if not _backend_available():
+        pytest.skip("Backend not running on localhost:8000; skipping smoke test")
+
+    r_health = _call_endpoint("GET", "/api/health")
+    assert r_health.status_code == 200
+
+    r_root = _call_endpoint("GET", "/")
+    assert r_root.status_code == 200

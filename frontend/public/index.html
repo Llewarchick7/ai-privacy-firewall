@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Privacy Firewall</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AI Privacy Firewall</h1>
+      <div id="authArea">
+        <button id="loginBtn">Login with Google</button>
+        <button id="emailBtn" class="secondary">Use email</button>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="emailLogin" style="display:none;">
+        <div class="card" style="max-width:420px;margin:0 0 16px 0;">
+          <h3>Sign in with email</h3>
+          <form id="emailForm">
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" required />
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input id="password" name="password" type="password" required />
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="submit">Login</button>
+              <button type="button" id="registerBtn" class="secondary">Register</button>
+              <button type="button" id="cancelEmail" class="ghost">Cancel</button>
+            </div>
+            <div id="emailError" class="error" style="display:none;"></div>
+          </form>
+        </div>
+      </section>
+      <section id="status">
+        <p id="authStatus">Not authenticated</p>
+      </section>
+
+      <section id="dashboard" style="display:none;">
+        <h2>Dashboard</h2>
+        <div id="verifyNotice" class="card" style="display:none; background:#fff3cd; color:#92400e; border:1px solid #fcd34d;">
+          <strong>Email verification required.</strong>
+          <div style="margin-top:4px; font-size:12px;">Check your inbox for a verification link. For dev you may have received a token in the register response. Paste token: <input id="manualVerifyToken" style="width:160px; display:inline-block; margin:0 6px;" placeholder="token" /> <button id="manualVerifyBtn" class="ghost" style="padding:4px 10px;">Verify</button> <span id="verifyMsg" class="hint"></span></div>
+          <div style="margin-top:6px;">
+            <button id="resendVerifyBtn" class="secondary" style="padding:6px 12px;">Resend Email</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value" id="totalQueries">0</div>
+            <div class="stat-label">Total DNS Queries (24h)</div>
+          </div>
+          <div class="stat danger">
+            <div class="stat-value" id="blockedQueries">0</div>
+            <div class="stat-label">Blocked Threats (24h)</div>
+          </div>
+          <div class="stat warn">
+            <div class="stat-value" id="activeDevices">0</div>
+            <div class="stat-label">Active Devices</div>
+          </div>
+        </div>
+
+    <div class="grid">
+          <div class="card">
+            <h3>Threat Timeline</h3>
+      <canvas id="threatChart" height="120"></canvas>
+          </div>
+          <div class="card">
+            <h3>Top Blocked Domains</h3>
+      <canvas id="domainsChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Recent Alerts</h3>
+            <div id="alertsList"></div>
+          </div>
+          <div class="card">
+            <h3>Connected Devices</h3>
+            <div id="devicesList"></div>
+             <div style="margin-top:8px;">
+               <button id="addDeviceBtn" class="secondary">Add Device</button>
+               <span id="enrollHint" class="hint"></span>
+             </div>
+          </div>
+          <div class="card">
+            <h3>Collectors</h3>
+            <div id="collectorsList" class="mini-list"></div>
+            <button id="enrollCollectorBtn" class="ghost" style="margin-top:6px;">Enroll Collector</button>
+          </div>
+          <div class="card">
+            <h3>Network Endpoints</h3>
+            <div id="endpointsList" class="mini-list"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <h3>Send sample batch</h3>
+          <p class="hint">Use your backend DEVICE_INGEST_TOKEN to post sample DNS queries and watch the dashboard update.</p>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input id="ingestToken" placeholder="X-Device-Token" />
+            <button id="sendSampleBtn">Send sample data</button>
+            <span id="ingestMsg" class="hint"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Floating ingest button -->
+  <button id="fabIngest" class="fab" title="Send sample data">➕ Send sample</button>
+
+  <!-- Ingest modal -->
+  <div id="ingestModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Send sample batch</h3>
+        <button id="closeIngest" class="ghost">✕</button>
+      </div>
+      <p class="hint">Paste your X-Device-Token and submit to post demo DNS queries.</p>
+      <input id="ingestTokenModal" placeholder="X-Device-Token" />
+      <div style="display:flex; gap:8px;">
+        <button id="sendSampleBtnModal">Send sample data</button>
+        <span id="ingestMsgModal" class="hint"></span>
+      </div>
+    </div>
+  </div>
+
+    <!-- Enrollment modal -->
+    <div id="enrollModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Enroll New Device</h3>
+          <button id="closeEnroll" class="ghost">✕</button>
+        </div>
+        <div id="enrollStageRequest">
+          <p class="hint">This adds a Collector (your Raspberry Pi DNS forwarder), not individual laptops. Later, endpoints (devices) will auto-appear when the Pi sends traffic.</p>
+          <input id="enrollName" placeholder="Device Name" />
+          <input id="enrollLocation" placeholder="Location (optional)" />
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button id="enrollRequestBtn">Generate Code</button>
+          </div>
+        </div>
+        <div id="enrollStageCode" style="display:none;">
+          <p>Enrollment Code:</p>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-size:1.4em; font-weight:bold; letter-spacing:2px;" id="enrollCodeBox"></div>
+            <button id="copyEnrollCode" class="ghost" title="Copy code">Copy</button>
+          </div>
+          <p class="hint" id="enrollExpiry"></p>
+          <p class="hint">Run on Pi: <code>python enroll_and_send.py --server http://YOUR_HOST:8000 --code &lt;CODE&gt; --mac &lt;MAC&gt;</code></p>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="enrollCloseBtn" class="secondary">Done</button>
+            <button id="enrollAnotherBtn" class="ghost">Add Another</button>
+          </div>
+        </div>
+        <div class="error" id="enrollError" style="display:none;"></div>
+      </div>
+    </div>
+
+  <script src="/login.js"></script>
+</body>
+</html>

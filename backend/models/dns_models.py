@@ -34,11 +34,56 @@ class Device(Base):
     last_seen = Column(DateTime, default=func.now())
     firmware_version = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    
+    # Provisioning / enrollment
+    status = Column(String, default="active")  # pending, active, disabled
+    device_secret = Column(String, nullable=True, index=True)  # per-device ingest secret (hex/random)
+    enrollment_code = Column(String, nullable=True, index=True)  # short one-time code for setup
+    enrollment_expires_at = Column(DateTime, nullable=True)
+    device_type = Column(String, default="collector")  # collector, legacy
     # Relationships
     user = relationship("Users", back_populates="devices")
-    dns_queries = relationship("DNSQuery", back_populates="device")
-    threat_detections = relationship("ThreatDetection", back_populates="device")
+    dns_queries = relationship("DNSQuery", back_populates="device", cascade="all, delete-orphan")
+    threat_detections = relationship("ThreatDetection", back_populates="device", cascade="all, delete-orphan")
+
+class Collector(Base):
+    """Physical ingestion appliance (e.g., Raspberry Pi) providing DNS data for multiple endpoints."""
+    __tablename__ = "collectors"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    uuid = Column(String, unique=True, nullable=False, index=True)
+    secret = Column(String, nullable=False)
+    status = Column(String, default="active")
+    last_seen = Column(DateTime, default=func.now())
+
+class Endpoint(Base):
+    """Network endpoint (client device) observed via a collector."""
+    __tablename__ = "endpoints"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    collector_id = Column(Integer, ForeignKey("collectors.id"), nullable=True)
+    mac_address = Column(String, index=True, nullable=False)
+    ip_address = Column(String, nullable=True)
+    hostname = Column(String, nullable=True)
+    friendly_name = Column(String, nullable=True)
+    first_seen = Column(DateTime, default=func.now())
+    last_seen = Column(DateTime, default=func.now())
+    status = Column(String, default="observed")  # observed, labeled, ignored
+
+class RefreshSession(Base):
+    """Refresh token sessions for long-lived authentication."""
+    __tablename__ = "refresh_sessions"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token_hash = Column(String, index=True, nullable=False)
+    issued_at = Column(DateTime, default=func.now())
+    expires_at = Column(DateTime, nullable=False)
+    user_agent = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
+    revoked = Column(Boolean, default=False)
+    
+    # Relationships
+    user = relationship("Users", back_populates="refresh_sessions")
 
 class DNSQuery(Base):
     """Individual DNS query logs from devices"""
@@ -60,6 +105,7 @@ class DNSQuery(Base):
     threat_score = Column(Float, default=0.0)  # AI-generated threat score 0-1
     is_malicious = Column(Boolean, default=False)
     blocked_reason = Column(String, nullable=True)
+    endpoint_id = Column(Integer, ForeignKey("endpoints.id"), nullable=True, index=True)
     
     # Relationships
     device = relationship("Device", back_populates="dns_queries")

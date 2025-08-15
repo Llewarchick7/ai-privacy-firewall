@@ -3,6 +3,8 @@ This module defines the User model for the database, representing users with the
 """
 
 from sqlalchemy import Column, Integer, String, Enum, Boolean, ForeignKey
+from sqlalchemy import DateTime
+from datetime import datetime
 from sqlalchemy.orm import relationship
 from backend.database import Base
 from backend.models.audit_log import AuditLogs  # ensure mapper registration
@@ -20,12 +22,20 @@ class Users(Base):
     # 2FA fields
     twofa_enabled = Column(Boolean, default=False)
     twofa_secret = Column(String, nullable=True)
+
+    # Email verification
+    is_verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True, index=True)
+    verification_expires_at = Column(DateTime, nullable=True)
     
     # one-to-one relationship -> returns the corresponding privacy_settings data for a given "user"(variable in PrivacySettings database)
     privacy_settings = relationship("PrivacySettings", back_populates="user")
     
     # one-to-many relationship -> user can have multiple devices
-    devices = relationship("Device", back_populates="user") 
+    devices = relationship("Device", back_populates="user", cascade="all, delete-orphan") 
+
+    # one-to-many relationship -> user can have multiple refresh sessions
+    refresh_sessions = relationship("RefreshSession", back_populates="user", cascade="all, delete-orphan")
     
     # one-to-many relationship -> user can have multiple audit logs
     audit_logs = relationship("AuditLogs", back_populates="user")

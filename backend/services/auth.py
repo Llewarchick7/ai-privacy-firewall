@@ -5,6 +5,8 @@ This module hashes passwords, verifies passwords, and generates JWT tokens
 
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
+import hashlib
+import secrets
 import jwt
 import os
 from dotenv import load_dotenv
@@ -17,7 +19,8 @@ load_dotenv()
 # Use standard env name SECRET_KEY to match .env
 SECRET_KEY = os.getenv("SECRET_KEY", "super_secret_key")
 ALGORITHM = "HS256"  
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 
 # Password hashing and verification
@@ -39,6 +42,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  
+
+def generate_refresh_token() -> str:
+    """Generate a cryptographically secure random refresh token"""
+    return secrets.token_urlsafe(64)
+
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+def refresh_token_expiry() -> datetime:
+    return datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
 # JWT decoding 
 def decode_access_token(token: str):

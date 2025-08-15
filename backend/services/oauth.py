@@ -1,7 +1,14 @@
 import os
 from fastapi import HTTPException
 from authlib.integrations.requests_client import OAuth2Session
-from backend.config.settings import OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_AUTH_URL, OAUTH_TOKEN_URL, OAUTH_REDIRECT_URI
+from backend.config.settings import (
+    OAUTH_CLIENT_ID,
+    OAUTH_CLIENT_SECRET,
+    OAUTH_AUTH_URL,
+    OAUTH_TOKEN_URL,
+    OAUTH_REDIRECT_URI,
+    OAUTH_SCOPES,
+)
 
 class OAuthService:
     def __init__(self):
@@ -14,7 +21,15 @@ class OAuthService:
     def get_authorization_url(self):
         """Generate an OAuth authorization URL for user login."""
         oauth = OAuth2Session(self.client_id, redirect_uri=self.redirect_uri)
-        auth_url, state = oauth.create_authorization_url(self.auth_url)
+        scopes = [s.strip() for s in (OAUTH_SCOPES or "").split()] or ["openid", "email", "profile"]
+        # Include Google-friendly params; state is returned by Authlib
+        auth_url, state = oauth.create_authorization_url(
+            self.auth_url,
+            scope=scopes,
+            prompt="consent",
+            access_type="offline",
+            include_granted_scopes="true",
+        )
         return auth_url
 
     def fetch_token(self, authorization_response: str):

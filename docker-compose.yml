@@ -1,0 +1,20 @@
+version: '3.9'
+services:
+  backend:
+    build: .
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      - SECRET_KEY=devsecret
+      - FRONTEND_URL=http://localhost:8000
+  frontend:
+    image: python:3.12-slim
+    working_dir: /app/frontend/public
+    volumes:
+      - ./frontend/public:/app/frontend/public:ro
+    command: python -m http.server 3000
+    ports:
+      - "3000:3000"

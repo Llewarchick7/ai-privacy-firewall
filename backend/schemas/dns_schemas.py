@@ -44,6 +44,8 @@ class DeviceResponse(BaseModel):
     is_active: bool
     last_seen: datetime
     firmware_version: Optional[str]
+    status: Optional[str] = None
+    enrollment_expires_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -52,6 +54,62 @@ class DeviceUpdate(BaseModel):
     name: Optional[str] = None
     location: Optional[str] = None
     is_active: Optional[bool] = None
+
+# Enrollment & provisioning schemas
+class DeviceEnrollmentRequest(BaseModel):
+    name: str
+    location: Optional[str] = None
+
+class DeviceEnrollmentCode(BaseModel):
+    device_id: int
+    enrollment_code: str
+    expires_at: datetime
+
+class DeviceEnrollComplete(BaseModel):
+    enrollment_code: str
+    mac_address: str
+    hostname: Optional[str] = None
+
+class DeviceCredentialResponse(BaseModel):
+    device_id: int
+    device_uuid: str
+    device_secret: str
+    issued_at: datetime
+
+# Collector / Endpoint schemas
+class CollectorEnrollmentRequest(BaseModel):
+    name: str
+    location: Optional[str] = None
+
+class CollectorResponse(BaseModel):
+    id: int
+    uuid: str
+    name: str
+    status: str
+    last_seen: Optional[datetime]
+    class Config:
+        from_attributes = True
+
+class EndpointResponse(BaseModel):
+    id: int
+    mac_address: str
+    ip_address: Optional[str]
+    hostname: Optional[str]
+    friendly_name: Optional[str]
+    status: str
+    first_seen: datetime
+    last_seen: datetime
+    class Config:
+        from_attributes = True
+
+class EndpointLabelUpdate(BaseModel):
+    friendly_name: Optional[str] = None
+    status: Optional[str] = None
+
+class HMACIngestMeta(BaseModel):
+    device_uuid: str
+    timestamp: int
+    signature: str  # hex hmac of body + '.' + timestamp
 
 # DNS Query Schemas
 class DNSQueryCreate(BaseModel):
@@ -192,7 +250,11 @@ class NetworkAnalytics(BaseModel):
     total_queries_24h: int
     blocked_queries_24h: int
     threats_detected_24h: int
-    top_blocked_domains: List[Dict[str, int]]
+    # List of objects {domain: str, count: int}
+    class TopBlockedDomain(BaseModel):
+        domain: str
+        count: int
+    top_blocked_domains: List[TopBlockedDomain]
     threat_timeline: List[Dict[str, Any]]
 
 class AlertCreate(BaseModel):

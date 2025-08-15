@@ -32,7 +32,7 @@ class UserRegister(BaseSchema):
     name: str
     email: EmailStr  
     password: str
-    role: UserRole
+    role: UserRole = UserRole.user
 
 # User response schema 
 class UserResponse(BaseSchema):
@@ -64,3 +64,30 @@ class TwoFASetup(BaseSchema):
     
 class TwoFAVerify(BaseSchema):
     key: str
+
+class TwoFAChallenge(BaseSchema):
+    twofa_required: bool = True
+    message: str = "2FA required"
+
+class VerificationRequest(BaseSchema):
+    email: EmailStr
+
+class VerificationResponse(BaseSchema):
+    message: str
+
+class ResendVerification(BaseSchema):
+    email: EmailStr
+
+class RefreshRequest(BaseSchema):
+    refresh_token: str
+
+class LogoutRequest(BaseSchema):
+    refresh_token: str
+
+class SessionInfo(BaseSchema):
+    id: int
+    issued_at: datetime
+    expires_at: datetime
+    user_agent: str | None
+    ip_address: str | None
+    revoked: bool
