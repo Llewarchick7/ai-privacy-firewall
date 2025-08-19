@@ -1,0 +1,6 @@
+#include "dns_batch.h"
+#include <string.h>
+void ring_init(domain_ring_t *r){ r->head=r->tail=r->count=0; }
+bool ring_push(domain_ring_t *r, const char *domain, uint32_t ts){ if(r->count>=RING_CAPACITY) return false; size_t L=strlen(domain); if(L>=DOMAIN_MAX_LEN) L=DOMAIN_MAX_LEN-1; domain_item_t *it=&r->buf[r->head]; memcpy(it->domain,domain,L); it->domain[L]='\0'; it->ts=ts; r->head=(r->head+1)%RING_CAPACITY; r->count++; return true; }
+uint16_t ring_pop_batch(domain_ring_t *r, domain_item_t *out, uint16_t max_items){ uint16_t n=r->count<max_items? r->count: max_items; for(uint16_t i=0;i<n;i++){ out[i]=r->buf[r->tail]; r->tail=(r->tail+1)%RING_CAPACITY; } r->count-=n; return n; }
+int build_compact_json(domain_item_t *items,uint16_t n,char *out,size_t out_cap){ size_t pos=0; #define PUT(c) do{ if(pos>=out_cap) return -1; out[pos++]=(c);}while(0) #define PUTSTR(s) do{ const char*_p=(s); while(*_p){ if(pos>=out_cap) return -1; out[pos++]=*_p++; }}while(0) PUT('{'); PUTSTR("\"q\":["); for(uint16_t i=0;i<n;i++){ if(i) PUT(','); PUT('{'); PUTSTR("\"d\":\""); const char *d=items[i].domain; while(*d){ char ch=*d++; if(ch=='\"'){ if(pos+2>=out_cap) return -1; out[pos++]='\\'; out[pos++]='\"'; } else { if(pos>=out_cap) return -1; out[pos++]=ch; }} PUT('"'); PUT('}'); } PUT(']'); PUT('}'); if(pos>=out_cap) return -1; out[pos]='\0'; return (int)pos; }
