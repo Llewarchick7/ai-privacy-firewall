@@ -12,6 +12,17 @@ YourCubeProject/
   config/     <-- optional separate folder for config.h
 ```
 
+## ⚡ STM32F407VET6 + LAN8760 Integration
+
+**📋 For complete STM32F407VET6 setup instructions, see: [STM32F407_INTEGRATION_GUIDE.md](STM32F407_INTEGRATION_GUIDE.md)**
+
+This guide covers:
+- CubeMX configuration for STM32F407VET6 + LAN8760
+- Hardware connections and pin mapping
+- LWIP and Ethernet setup
+- Step-by-step CubeIDE integration
+- Troubleshooting and optimization
+
 ## Files Provided
 - app_main.c / app_main.h : High-level application init & loop
 - dns_batch.c / dns_batch.h : Domain ring & JSON builder
